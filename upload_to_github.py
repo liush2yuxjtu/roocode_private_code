@@ -28,8 +28,7 @@ def main():
         run_command('git commit -m "添加GPU示例代码和使用说明"')
         
         # 设置远程仓库
-        repo_name = "gpu_demo"
-        repo_url = f"https://github.com/liush2yuxjtu/{repo_name}.git"
+        repo_url = "https://github.com/liush2yuxjtu/roocode_private_code.git"
         print("添加远程仓库:", repo_url)
         run_command("git remote remove origin")  # 移除已存在的origin
         run_command(f"git remote add origin {repo_url}")
