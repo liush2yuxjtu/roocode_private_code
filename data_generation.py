@@ -1,63 +1,49 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from tqdm import tqdm
 
-def create_3d_gaussian_sphere(size=64, r_min=16, r_max=32):
+def generate_gaussian_sphere_data(shape=(64, 64, 64), r_min=16, r_max=32):
     """
-    创建3D高斯球形数据
-    size: 体素大小
-    r_min: 最小半径
-    r_max: 最大半径
-    """
-    # 随机生成球心和半径
-    r = np.random.uniform(r_min, r_max)
-    center_range = (r, size-r)
-    center = np.random.uniform(center_range[0], center_range[1], 3)
-    
-    # 创建网格点
-    x, y, z = np.mgrid[0:size, 0:size, 0:size]
-    
-    # 计算到球心的距离
-    dist = np.sqrt((x - center[0])**2 + (y - center[1])**2 + (z - center[2])**2)
-    
-    # 创建高斯球
-    sigma = r/3  # 使高斯分布在球半径处衰减到约0.01
-    sphere = np.exp(-(dist**2)/(2*sigma**2))
-    
-    return sphere
+    生成 3D 高斯球虚拟数据。
 
-def generate_dataset(num_samples=100, size=64, r_min=16, r_max=32):
-    """
-    生成数据集
-    num_samples: 样本数量
-    """
-    dataset = []
-    for _ in tqdm(range(num_samples)):
-        sample = create_3d_gaussian_sphere(size, r_min, r_max)
-        dataset.append(sample)
-    return np.array(dataset)
+    Args:
+        shape (tuple): 数据形状 (height, width, depth).
+        r_min (int): 最小半径.
+        r_max (int): 最大半径.
 
-def visualize_sample(sample):
+    Returns:
+        numpy.ndarray: 生成的 3D 数据.
     """
-    可视化3D数据的中心切片
-    """
-    center_slice = sample.shape[0]//2
-    
-    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
-    axes[0].imshow(sample[center_slice, :, :])
-    axes[0].set_title('XY平面')
-    axes[1].imshow(sample[:, center_slice, :])
-    axes[1].set_title('XZ平面')
-    axes[2].imshow(sample[:, :, center_slice])
-    axes[2].set_title('YZ平面')
-    plt.show()
+    data = np.zeros(shape, dtype=np.float32)
+    center = np.array([s // 2 for s in shape])  # 中心点坐标
+    r = np.random.randint(r_min, r_max + 1)  # 随机半径
 
-if __name__ == "__main__":
-    # 生成示例数据
-    sample = create_3d_gaussian_sphere()
-    print("数据形状:", sample.shape)
-    visualize_sample(sample)
+    for x in range(shape[0]):
+        for y in range(shape[1]):
+            for z in range(shape[2]):
+                dist = np.sqrt(np.sum((np.array([x, y, z]) - center) ** 2))
+                if dist < r and dist > 0:  # 修改：dist > 0 避免中心点为0
+                    data[x, y, z] = np.exp(-dist**2 / (2 * (r/3)**2))  # 高斯分布，半径1/3处衰减到峰值的约60%
+
+    return data
+
+def generate_dataset(num_samples=100, save_dir='data'):
+    """
+    生成数据集并保存。
+
+    Args:
+        num_samples (int): 要生成的样本数量
+        save_dir (str): 保存数据的目录
+    """
+    import os
+    os.makedirs(save_dir, exist_ok=True)
     
-    # 生成数据集
-    dataset = generate_dataset(num_samples=5)
-    print("数据集形状:", dataset.shape)
+    for i in range(num_samples):
+        data = generate_gaussian_sphere_data()
+        save_path = os.path.join(save_dir, f'sample_{i:04d}.npy')
+        np.save(save_path, data)
+        if i % 10 == 0:
+            print(f'Generated {i+1}/{num_samples} samples')
+
+if __name__ == '__main__':
+    # 生成示例数据集
+    generate_dataset(num_samples=100)
+    print("Data generation complete.")
